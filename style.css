@@ -1,0 +1,78 @@
+﻿/* ---------- Цветовые переменные ---------- */
+:root {
+    --bg-main:      #2d373f;  /* общий фон */
+    --bg-surface:   #1f272d;  /* шапка / подвал */
+    --border-accent: #00ecc8;  /* линии-акценты */
+    --text-base: #ffffff;  /* основной текст */
+    --link-normal:  #5da9e9;  /* ссылки */
+    --text-accent: #ffffff;  /* заголовки / важные элементы */
+}
+
+/* ---------- Базовая раскладка ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, sans-serif;
+    line-height: 1.6;
+    background: var(--bg-main);
+    color: var(--text-base);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ---------- Header & Navigation ---------- */
+header {
+    background: var(--bg-surface);
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-accent);
+}
+
+header h1 {
+    margin-bottom: .5rem;
+    font-size: 1.75rem;
+}
+
+a {
+    margin-right: 1rem;
+    color: var(--link-normal);
+    text-decoration: none;
+}
+
+a:visited {
+    margin-right: 1rem;
+    color: var(--link-normal);
+    text-decoration: none;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Main ---------- */
+main {
+    flex: 1;
+    width: 100%;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* ---------- Article / Sections ---------- */
+article h2,
+section h2 {
+    margin: 1.5rem 0 .5rem;
+    font-size: 1.4rem;
+    color: var(--text-accent);
+}
+
+article ul { margin-left: 1.5rem; list-style: disc; }
+
+/* ---------- Footer ---------- */
+footer {
+    background: var(--bg-surface);
+    padding: .8rem;
+    text-align: center;
+    border-top: 2px solid var(--border-accent);
+    font-size: .9rem;
+}
