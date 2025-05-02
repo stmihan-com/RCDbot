@@ -1,0 +1,7 @@
+﻿services:
+  app:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - "./db:/usr/app/db"
+    
