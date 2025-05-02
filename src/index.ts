@@ -84,7 +84,7 @@ roomManager.on(EventType.RoomCreated, async room => {
         ownerId: owner.id,
     })
     const row = new ActionRowBuilder();
-    row.addComponents(roomButtons.map(b => b.buttonBuilder))
+    row.addComponents(await Promise.all(roomButtons.map(async button => await button.buttonBuilder(vc.guild.id))));
 
     const messageObj: MessageCreateOptions = {
         content: message,

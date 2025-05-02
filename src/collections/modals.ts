@@ -11,20 +11,20 @@ import {languageManager} from "../localization/languageManager";
 
 export interface Modal {
     customId: string;
-    builder: () => ModalBuilder;
+    builder: (guildId: string | null) => Promise<ModalBuilder>;
     execute: (i: ModalSubmitInteraction) => Promise<void>;
 }
 
 export const renameModal: Modal = {
     customId: "rename-modal",
-    builder: () => {
+    builder: async (guildId) => {
         const modal = new ModalBuilder()
             .setCustomId("rename-modal")
-            .setTitle(languageManager.get("renameRoom"));
+            .setTitle(await languageManager.getGuild("renameRoom", guildId));
 
         const renameInput = new TextInputBuilder()
             .setCustomId("rename-input")
-            .setLabel(languageManager.get("newRoomName"))
+            .setLabel(await languageManager.getGuild("newRoomName", guildId))
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
@@ -49,14 +49,14 @@ export const renameModal: Modal = {
 
 export const changeOwnerModal: Modal = {
     customId: "change-owner-modal",
-    builder: () => {
+    builder: async (guildId) => {
         const modal = new ModalBuilder()
             .setCustomId("change-owner-modal")
-            .setTitle(languageManager.get("changeOwner"));
+            .setTitle(await languageManager.getGuild("changeOwner", guildId));
 
         const ownerInput = new TextInputBuilder()
             .setCustomId("owner-input")
-            .setLabel(languageManager.get("newOwnerId"))
+            .setLabel(await languageManager.getGuild("newOwnerId", guildId))
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
@@ -72,7 +72,7 @@ export const changeOwnerModal: Modal = {
 
         const owner = room.members.get(ownerId);
         if (!owner) {
-            await i.reply({content: languageManager.get("ownerNotFound")});
+            await i.reply({content: await languageManager.getGuild("ownerNotFound", i.guildId ?? "")});
             return;
         }
 

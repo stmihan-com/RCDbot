@@ -14,6 +14,7 @@ export const guildsTable = sqliteTable("guilds", {
     guildId: text("guild_id").primaryKey(),
     lobbyVoiceId: text("lobby_voice_id"),
     roomCategoryId: text("room_category_id"),
+    language: text("language"),
 });
 
 const client = createClient({url: process.env.DB_FILE_NAME!});

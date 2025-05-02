@@ -66,4 +66,30 @@ export const strings = {
         [Language.EN]: "Temporary room category set to <#%categoryId%>",
         [Language.RU]: "Категория временных комнат установлена на <#%categoryId%>",
     },
+    
+    status: {
+        [Language.EN]: "Status",
+        [Language.RU]: "Статус",
+    },
+    noGuildSettings: {
+        [Language.EN]: "No guild settings",
+        [Language.RU]: "Нет настроек гильдии",
+    },
+    statusMessage: {
+        [Language.EN]: "Status:\n\nLobby voice channel: <#%lobbyVoiceId%>\nTemporary room category: <#%roomCategoryId%>\nLanguage: %language%",
+        [Language.RU]: "Статус:\n\nГолосовой канал лобби: <#%lobbyVoiceId%>\nКатегория временных комнат: <#%roomCategoryId%>\nЯзык: %language%",
+    },
+
+    setLanguage: {
+        [Language.EN]: "Set language",
+        [Language.RU]: "Установить язык",
+    },
+    language: {
+        [Language.EN]: "Language",
+        [Language.RU]: "Язык",
+    },
+    onLanguageChanged: {
+        [Language.EN]: "Language changed to %language%",
+        [Language.RU]: "Язык изменён на %language%",
+    }
 } as const;

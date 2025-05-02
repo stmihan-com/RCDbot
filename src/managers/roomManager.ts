@@ -28,7 +28,7 @@ class RoomManager {
     
     public async createNewRoom(guild: Guild, owner: GuildMember, categoryId: string | null) {
         const room = await guild.channels.create({
-            name: languageManager.get("defaultRoomName", {
+            name: await languageManager.getGuild("defaultRoomName", guild.id, {
                 username: owner.user.username,
             }),
             type: ChannelType.GuildVoice,
@@ -76,7 +76,7 @@ class RoomManager {
             ownerId: newOwner.id,
         }).where(eq(roomsTable.roomId, room.id));
         const message = {
-            content: languageManager.get("roomOwnerChanged", {
+            content: await languageManager.getGuild("roomOwnerChanged", room.guild.id, {
                 newOwnerId: newOwner.id,
             }),
         };

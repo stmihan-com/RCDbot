@@ -1,16 +1,17 @@
 ﻿import {
-    SlashCommandBuilder,
-    ChatInputCommandInteraction,
     CacheType,
-    VoiceChannel,
     CategoryChannel,
     ChannelType,
+    ChatInputCommandInteraction,
     PermissionFlagsBits,
-    SlashCommandOptionsOnlyBuilder
+    SlashCommandBuilder,
+    SlashCommandOptionsOnlyBuilder,
+    VoiceChannel
 } from "discord.js";
-import {strings} from "../localization/strings";
 import {db, guildsTable} from "../db";
-import {languageManager, LanguageManager} from "../localization/languageManager";
+import {languageManager} from "../localization/languageManager";
+import {eq} from "drizzle-orm";
+import {defaultLanguage, Language} from "../localization/languages";
 
 export interface Command {
     builder: SlashCommandOptionsOnlyBuilder;
@@ -46,10 +47,11 @@ export const commands: Command[] = [
                     }
                 })
 
+            const message = await languageManager.getGuild("lobbyVoiceChannelSet", i.guildId, {
+                channelId: ch?.id ?? "none",
+            });
             await i.reply({
-                content: languageManager.get("lobbyVoiceChannelSet", {
-                    channelId: ch?.id ?? "none",
-                }), flags: 'Ephemeral'
+                content: message, flags: 'Ephemeral'
             });
         }
     },
@@ -80,13 +82,72 @@ export const commands: Command[] = [
                     }
                 })
 
+            const message = await languageManager.getGuild("tempRoomCategorySet", i.guildId, {
+                categoryId: cat?.id ?? "none",
+            });
             await i.reply({
-                content: languageManager.get("tempRoomCategorySet",
-                    {
-                        categoryId: cat?.id ?? "none",
-                    }),
+                content: message,
                 flags: 'Ephemeral'
             });
         },
     },
+    {
+        builder: new SlashCommandBuilder()
+            .setName("status")
+            .setDescription(languageManager.get("status")),
+        execute: async (i) => {
+            if (!i.inGuild() || !i.guild) return;
+
+            const guildDb = await db
+                .select()
+                .from(guildsTable)
+                .where(eq(guildsTable.guildId, i.guild.id))
+                .get();
+
+            if (!guildDb) {
+                await i.reply({
+                    content: languageManager.get("noGuildSettings"),
+                    flags: 'Ephemeral'
+                });
+                return;
+            }
+
+            const message = await languageManager.getGuild("statusMessage", i.guildId, {
+                lobbyVoiceId: guildDb.lobbyVoiceId ?? "none",
+                roomCategoryId: guildDb.roomCategoryId ?? "none",
+                language: guildDb.language ?? defaultLanguage,
+            })
+            await i.reply({
+                content: message,
+                flags: 'Ephemeral'
+            });
+        }
+    },
+    {
+        builder: new SlashCommandBuilder()
+            .setName("setlanguage")
+            .setDescription(languageManager.get("setLanguage"))
+            .addStringOption(opt =>
+                opt.setName("language")
+                    .setDescription(languageManager.get("language"))
+                    .setRequired(true)
+                    .addChoices(
+                        Object.values(Language).map(lang => ({
+                            name: lang,
+                            value: lang,
+                        }))
+                    )
+            ),
+        execute: async (i) => {
+            if (!i.inGuild() || !i.guild) return;
+            const lang = i.options.getString("language") ?? defaultLanguage;
+            await languageManager.setLanguage(i.guildId ?? "", i.options.getString("language") as Language);
+
+            await i.reply({
+                content: await languageManager.getGuild("onLanguageChanged", i.guildId ?? "", {
+                    language: lang,
+                })
+            })
+        }
+    }
 ];
