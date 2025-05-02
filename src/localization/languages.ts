@@ -3,4 +3,4 @@
     RU = "ru",
 }
 
-export const defaultLanguage = Language.RU;
+export const defaultLanguage = Language.EN;
