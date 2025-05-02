@@ -5,7 +5,6 @@ COPY . .
 
 RUN npm install
 RUN npm run build
-run npm run migrate
 
 ENV NODE_ENV=production
 CMD ["npm", "start"]
