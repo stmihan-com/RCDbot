@@ -1,7 +1,8 @@
 ﻿import 'dotenv/config';
 import {drizzle} from 'drizzle-orm/libsql';
 import {createClient} from '@libsql/client';
-import {sqliteTable, text} from "drizzle-orm/sqlite-core";
+import {integer, sqliteTable, text} from "drizzle-orm/sqlite-core";
+import {sql} from "drizzle-orm";
 
 export const roomsTable = sqliteTable("rooms", {
     id: text("id").primaryKey(),
@@ -17,11 +18,19 @@ export const guildsTable = sqliteTable("guilds", {
     language: text("language"),
 });
 
+export const analyticsTable = sqliteTable("analytics", {
+    id: integer("id").primaryKey({autoIncrement: true}),
+    eventType: text("event_type").notNull(),
+    payload: text("payload", {mode: 'json'}).notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 const client = createClient({url: process.env.DB_FILE_NAME!});
 export const db = drizzle({
     client,
     schema: {
         roomsTable,
         guildsTable,
+        analyticsTable,
     }
 });

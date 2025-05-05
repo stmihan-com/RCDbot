@@ -15,6 +15,13 @@
       "when": 1746197029925,
       "tag": "0001_dapper_ricochet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1746475955089,
+      "tag": "0002_dizzy_big_bertha",
+      "breakpoints": true
     }
   ]
 }

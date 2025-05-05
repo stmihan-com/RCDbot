@@ -17,6 +17,7 @@ import {EventType, roomManager} from "./managers/roomManager";
 import {allButtons, roomButtons} from "./collections/buttons";
 import {allModals} from "./collections/modals";
 import {languageManager} from "./localization/languageManager";
+import {analyticsT} from "./anallytics/analytics";
 
 const client = new Client({
     intents: [
@@ -63,15 +64,14 @@ client.on("interactionCreate", async (interaction) => {
 })
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
-    const guildDb = await db.query.guildsTable.findFirst({
-        where: eq(guildsTable.guildId, newState.guild.id),
-    });
-    if (!guildDb || !guildDb.lobbyVoiceId) return;
-
-    if (newState.channelId === guildDb.lobbyVoiceId) {
-        await roomManager.createNewRoom(newState.guild, newState.member as GuildMember, guildDb.roomCategoryId)
+    if (newState.channel) {
+        if (oldState && oldState.channel) {
+            if (oldState.channel.id === newState.channel.id) return;
+            await roomManager.onRoomLeave(oldState);
+        }
+        await roomManager.onRoomJoin(newState);
     } else {
-        await roomManager.cleanUpRooms(newState.guild);
+        await roomManager.onRoomLeave(oldState);
     }
 })
 
@@ -92,6 +92,18 @@ roomManager.on(EventType.RoomCreated, async room => {
     }
 
     await vc.send(messageObj)
+    await analyticsT('CHANNEL_CREATED', {
+        guildId: room.guildId,
+        channelId: room.id,
+        ownerId: owner.id,
+    })
+})
+
+roomManager.on(EventType.RoomDeleted, async room => {
+    await analyticsT('CHANNEL_DELETED', {
+        guildId: room.guildId,
+        channelId: room.id,
+    })
 })
 
 client.login(process.env.DISCORD_TOKEN);
