@@ -94,7 +94,8 @@ export const commands: Command[] = [
     {
         builder: new SlashCommandBuilder()
             .setName("status")
-            .setDescription(languageManager.get("status")),
+            .setDescription(languageManager.get("status"))
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
         execute: async (i) => {
             if (!i.inGuild() || !i.guild) return;
 
@@ -137,7 +138,8 @@ export const commands: Command[] = [
                             value: lang,
                         }))
                     )
-            ),
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
         execute: async (i) => {
             if (!i.inGuild() || !i.guild) return;
             const lang = i.options.getString("language") ?? defaultLanguage;

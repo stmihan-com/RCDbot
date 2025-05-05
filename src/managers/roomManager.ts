@@ -1,7 +1,8 @@
-﻿import {db, roomsTable} from "../db";
+﻿import {db, guildsTable, roomsTable} from "../db";
 import {eq} from "drizzle-orm";
-import {ChannelType, Guild, GuildChannel, GuildMember, Interaction, VoiceChannel} from "discord.js";
+import {ChannelType, Guild, GuildChannel, GuildMember, Interaction, VoiceChannel, VoiceState} from "discord.js";
 import {languageManager} from "../localization/languageManager";
+import {analyticsT} from "../anallytics/analytics";
 
 export enum EventType {
     RoomCreated = "roomCreated",
@@ -12,21 +13,70 @@ class RoomManager {
     private eventCallbacks: {
         [key in EventType]?: ((room: GuildChannel) => void)[]
     } = {};
-    
+
     public on(event: EventType, callback: (room: GuildChannel) => void) {
         this.eventCallbacks[event] = [...(this.eventCallbacks[event] || []), callback];
     }
-    
-    private trigger(event: EventType, room: GuildChannel) {
-        const callbacks = this.eventCallbacks[event];
-        if (callbacks) {
-            for (const callback of callbacks) {
-                callback(room);
-            }
+
+    public async onRoomJoin(state: VoiceState) {
+        const guildDb = await db.query.guildsTable.findFirst({
+            where: eq(guildsTable.guildId, state.guild.id),
+        });
+        if (!guildDb || !guildDb.lobbyVoiceId) return;
+
+        if (state.channelId === guildDb.lobbyVoiceId) {
+            await roomManager.createNewRoom(state.guild, state.member as GuildMember, guildDb.roomCategoryId)
+        } else {
+            await analyticsT("CHANNEL_JOINED", {
+                guildId: state.guild.id,
+                channelId: state.channelId ?? "none",
+                memberId: state.member?.id ?? "none",
+            })
+            await roomManager.cleanUpRooms(state.guild);
         }
     }
-    
-    public async createNewRoom(guild: Guild, owner: GuildMember, categoryId: string | null) {
+
+    public async onRoomLeave(state: VoiceState) {
+        const guildDb = await db.query.guildsTable.findFirst({
+            where: eq(guildsTable.guildId, state.guild.id),
+        });
+        if (!guildDb) return;
+
+        if (state.channelId !== guildDb.lobbyVoiceId) {
+            await roomManager.cleanUpRooms(state.guild);
+            await analyticsT("CHANNEL_LEFT", {
+                guildId: state.guild.id,
+                channelId: state.channelId ?? "none",
+                memberId: state.member?.id ?? "none",
+            })
+        }
+    }
+
+    public async changeOwner(room: VoiceChannel, newOwner: GuildMember, i: Interaction | null = null) {
+        await db.update(roomsTable).set({
+            ownerId: newOwner.id,
+        }).where(eq(roomsTable.roomId, room.id));
+        const message = {
+            content: await languageManager.getGuild("roomOwnerChanged", room.guild.id, {
+                newOwnerId: newOwner.id,
+            }),
+        };
+        if (i && i.isRepliable()) {
+            i.reply(message);
+        } else {
+            await room.send(message);
+        }
+    }
+
+    public async isOwner(roomId: string, memberId: string) {
+        const roomDb = await db.query.roomsTable.findFirst({
+            where: eq(roomsTable.roomId, roomId),
+        });
+        if (!roomDb) return false;
+        return roomDb.ownerId === memberId;
+    }
+
+    private async createNewRoom(guild: Guild, owner: GuildMember, categoryId: string | null) {
         const room = await guild.channels.create({
             name: await languageManager.getGuild("defaultRoomName", guild.id, {
                 username: owner.user.username,
@@ -44,13 +94,13 @@ class RoomManager {
         await owner.voice.setChannel(room);
         this.trigger(EventType.RoomCreated, room);
     }
-    
-    public async cleanUpRooms(guild: Guild) {
+
+    private async cleanUpRooms(guild: Guild) {
         const rooms = await db
             .select()
             .from(roomsTable)
             .where(eq(roomsTable.guildId, guild.id))
-        
+
         for (const roomDb of rooms) {
             try {
                 const room = await guild.channels.fetch(roomDb.roomId!) as VoiceChannel | null;
@@ -70,31 +120,16 @@ class RoomManager {
             }
         }
     }
-    
-    public async changeOwner(room: VoiceChannel, newOwner: GuildMember, i: Interaction | null = null) {
-        await db.update(roomsTable).set({
-            ownerId: newOwner.id,
-        }).where(eq(roomsTable.roomId, room.id));
-        const message = {
-            content: await languageManager.getGuild("roomOwnerChanged", room.guild.id, {
-                newOwnerId: newOwner.id,
-            }),
-        };
-        if (i && i.isRepliable()) {
-            i.reply(message);
-        } else {
-            await room.send(message);
+
+    private trigger(event: EventType, room: GuildChannel) {
+        const callbacks = this.eventCallbacks[event];
+        if (callbacks) {
+            for (const callback of callbacks) {
+                callback(room);
+            }
         }
     }
-    
-    public async isOwner(roomId: string, memberId: string) {
-        const roomDb = await db.query.roomsTable.findFirst({
-            where: eq(roomsTable.roomId, roomId),
-        });
-        if (!roomDb) return false;
-        return roomDb.ownerId === memberId;
-    }
-    
+
     private async migrateAdmins(room: VoiceChannel) {
         const roomDb = await db.query.roomsTable.findFirst({
             where: eq(roomsTable.roomId, room.id),
