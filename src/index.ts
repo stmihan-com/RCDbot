@@ -3,7 +3,6 @@ import {
     ActionRowBuilder,
     Client,
     GatewayIntentBits,
-    GuildMember,
     MessageCreateOptions,
     Partials,
     Routes,
@@ -11,13 +10,12 @@ import {
 } from "discord.js";
 import {REST} from "@discordjs/rest";
 import {commands} from "./collections/commands";
-import {db, guildsTable} from "./db";
-import {eq} from "drizzle-orm";
 import {EventType, roomManager} from "./managers/roomManager";
 import {allButtons, roomButtons} from "./collections/buttons";
 import {allModals} from "./collections/modals";
 import {languageManager} from "./localization/languageManager";
 import {analyticsT} from "./anallytics/analytics";
+import {usersManager} from "./managers/usersManager";
 
 const client = new Client({
     intents: [
@@ -29,6 +27,7 @@ const client = new Client({
 });
 
 client.once("ready", async () => {
+    await usersManager.ensureAllUsersFetched(client);
     console.log(`Logged in as ${client.user?.tag}`);
     const rest = new REST({version: "10"}).setToken(process.env.DISCORD_TOKEN!);
     await rest.put(
@@ -97,6 +96,7 @@ roomManager.on(EventType.RoomCreated, async room => {
         channelId: room.id,
         ownerId: owner.id,
     })
+    await usersManager.fetchUser(room.client, owner.id, true);
 })
 
 roomManager.on(EventType.RoomDeleted, async room => {

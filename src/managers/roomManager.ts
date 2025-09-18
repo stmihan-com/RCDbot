@@ -3,6 +3,7 @@ import {eq} from "drizzle-orm";
 import {ChannelType, Guild, GuildChannel, GuildMember, Interaction, VoiceChannel, VoiceState} from "discord.js";
 import {languageManager} from "../localization/languageManager";
 import {analyticsT} from "../anallytics/analytics";
+import {usersManager} from "./usersManager";
 
 export enum EventType {
     RoomCreated = "roomCreated",
@@ -33,6 +34,9 @@ class RoomManager {
                 memberId: state.member?.id ?? "none",
             })
             await roomManager.cleanUpRooms(state.guild);
+            if (state.member) {
+                await usersManager.fetchUser(state.client, state.member.id, true);
+            }
         }
     }
 
@@ -49,6 +53,9 @@ class RoomManager {
                 channelId: state.channelId ?? "none",
                 memberId: state.member?.id ?? "none",
             })
+            if (state.member) {
+                await usersManager.fetchUser(state.client, state.member.id, true);
+            }
         }
     }
 

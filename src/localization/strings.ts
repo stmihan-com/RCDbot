@@ -91,5 +91,9 @@ export const strings = {
     onLanguageChanged: {
         [Language.EN]: "Language changed to %language%",
         [Language.RU]: "Язык изменён на %language%",
+    },
+    fetchAllUsers: {
+        [Language.EN]: "Fetch all users data",
+        [Language.RU]: "Обновить данные всех пользователей",
     }
 } as const;

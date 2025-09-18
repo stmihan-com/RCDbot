@@ -25,6 +25,13 @@ export const analyticsTable = sqliteTable("analytics", {
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const usersTable = sqliteTable("users", {
+    userId: text("user_id").primaryKey(),
+    displayName: text("display_name"),
+    username: text("username").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 const client = createClient({url: process.env.DB_FILE_NAME!});
 export const db = drizzle({
     client,
@@ -32,5 +39,6 @@ export const db = drizzle({
         roomsTable,
         guildsTable,
         analyticsTable,
+        usersTable,
     }
 });

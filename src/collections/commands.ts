@@ -2,7 +2,7 @@
     CacheType,
     CategoryChannel,
     ChannelType,
-    ChatInputCommandInteraction,
+    ChatInputCommandInteraction, MessageCreateOptions,
     PermissionFlagsBits,
     SlashCommandBuilder,
     SlashCommandOptionsOnlyBuilder,
@@ -12,6 +12,7 @@ import {db, guildsTable} from "../db";
 import {languageManager} from "../localization/languageManager";
 import {eq} from "drizzle-orm";
 import {defaultLanguage, Language} from "../localization/languages";
+import {usersManager} from "../managers/usersManager";
 
 export interface Command {
     builder: SlashCommandOptionsOnlyBuilder;
@@ -151,5 +152,25 @@ export const commands: Command[] = [
                 })
             })
         }
+    },
+    {
+        builder: new SlashCommandBuilder()
+            .setName("fetchusers")
+            .setDescription(languageManager.get("fetchAllUsers"))
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        execute: async (i) => {
+            if (!i.inGuild() || !i.guild) return;
+            await i.channel?.send({
+                content: "Fetching all users, this may take a while...",
+            });
+            await i.reply({
+                content: "Started fetching all users data. Check this channel for progress.",
+                flags: 'Ephemeral',
+            });
+            await usersManager.ensureAllUsersFetched(i.client, true);
+            await i.channel?.send({
+                content: "All users data fetched successfully.",
+            });
+        },
     }
 ];
